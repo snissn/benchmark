@@ -182,6 +182,14 @@ def main():
         "chain/inserts.50-percentile",
         "chain/execution.50-percentile",
     ]
+    forkchoice_keys = [
+        "engine/forkchoice/total.50-percentile",
+        "engine/forkchoice/block_lookup.50-percentile",
+        "engine/forkchoice/set_canonical.50-percentile",
+        "engine/forkchoice/set_finalized.50-percentile",
+        "engine/forkchoice/set_safe.50-percentile",
+        "engine/forkchoice/build_payload.50-percentile",
+    ]
 
     print("Headline summary (avg across blocks)")
     header = f"{'metric':40} {'leveldb':>14} {'treedb':>14} {'diff':>10}"
@@ -232,6 +240,15 @@ def main():
         treedb["sequencer"],
     ))
     print()
+    print(_compare_table(
+        "Sequencer forkchoice breakdown (avg, ms; lower is better)",
+        forkchoice_keys,
+        leveldb["sequencer"],
+        treedb["sequencer"],
+        unit="ms",
+        convert=lambda v: v / 1_000_000.0,
+    ))
+    print()
 
     latency_keys_val = [
         "latency/new_payload",
@@ -273,6 +290,15 @@ def main():
         db_keys_val,
         leveldb["validator"],
         treedb["validator"],
+    ))
+    print()
+    print(_compare_table(
+        "Validator forkchoice breakdown (avg, ms; lower is better)",
+        forkchoice_keys,
+        leveldb["validator"],
+        treedb["validator"],
+        unit="ms",
+        convert=lambda v: v / 1_000_000.0,
     ))
     print()
 

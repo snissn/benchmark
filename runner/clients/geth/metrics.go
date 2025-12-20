@@ -43,6 +43,12 @@ func (g *metricsCollector) GetMetricTypes() map[string]bool {
 		"chain/account/commits.50-percentile":  true,
 		"chain/storage/commits.50-percentile":  true,
 		"chain/inserts.50-percentile":          true,
+		"engine/forkchoice/total.50-percentile":        true,
+		"engine/forkchoice/block_lookup.50-percentile": true,
+		"engine/forkchoice/set_canonical.50-percentile": true,
+		"engine/forkchoice/set_finalized.50-percentile": true,
+		"engine/forkchoice/set_safe.50-percentile":      true,
+		"engine/forkchoice/build_payload.50-percentile": true,
 	}
 }
 
