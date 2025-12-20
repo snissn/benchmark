@@ -568,14 +568,16 @@ func (s *service) runTest(ctx context.Context, params types.RunParams, workingDi
 		}
 	}
 
+	keepTestDirs := os.Getenv("BASE_BENCH_KEEP_TEST_DIRS") != ""
 	defer func() {
-		// clean up test directory
+		if keepTestDirs {
+			return
+		}
 		err := os.RemoveAll(sequencerTestDir)
 		if err != nil {
 			log.Error("failed to remove test directory", "err", err)
 		}
 
-		// clean up test directory
 		err = os.RemoveAll(validatorTestDir)
 		if err != nil {
 			log.Error("failed to remove test directory", "err", err)

@@ -216,17 +216,9 @@ func (t *contractPayloadWorker) sendContractTx(ctx context.Context) error {
 	contractAddress := t.contractAddress
 
 	privateKey := t.prefundedAccount
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return fmt.Errorf("error casting public key to ECDSA")
-	}
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
-	nonce, err := t.client.PendingNonceAt(context.Background(), fromAddress)
-	if err != nil {
-		return fmt.Errorf("failed to get nonce: %w", err)
-	}
+	// Use the locally tracked nonce to avoid duplicate raw txs per block.
+	nonce := t.nonce
 
 	gasLimit := new(big.Int).Mul(big.NewInt(int64(t.runParams.GasLimit)), big.NewInt(95))
 	gasLimit = gasLimit.Div(gasLimit, big.NewInt(int64(t.params.CallsPerBlock)))
@@ -282,6 +274,7 @@ func (t *contractPayloadWorker) sendContractTx(ctx context.Context) error {
 	tx := types.MustSignNewTx(privateKey, signer, txdata)
 
 	t.mempool.AddTransactions([]*types.Transaction{tx})
+	t.nonce++
 
 	return nil
 }

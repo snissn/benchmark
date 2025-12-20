@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -75,13 +76,37 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 	args := make([]string, 0)
 
 	// first init geth
+	useTreeDB := false
+	for _, arg := range cfg.Args {
+		if strings.HasPrefix(arg, "--db.engine=treedb") {
+			useTreeDB = true
+			break
+		}
+	}
+	stateScheme := "hash"
+	if useTreeDB {
+		stateScheme = "path"
+	}
+
 	if !g.options.SkipInit {
-		args = append(args, "--datadir", g.options.DataDirPath)
-		args = append(args, "--state.scheme", "hash")
+		if useTreeDB {
+			chaindataPath := filepath.Join(g.options.DataDirPath, "geth", "chaindata")
+			if err := os.MkdirAll(chaindataPath, 0755); err != nil {
+				return errors.Wrap(err, "failed to create chaindata directory for treedb")
+			}
+		}
 
-		args = append(args, "init", g.options.ChainCfgPath)
+		initArgs := make([]string, 0, len(cfg.Args)+6)
+		initArgs = append(initArgs, "--datadir", g.options.DataDirPath)
+		initArgs = append(initArgs, "--state.scheme", stateScheme)
+		for _, arg := range cfg.Args {
+			if strings.HasPrefix(arg, "--db.engine") {
+				initArgs = append(initArgs, arg)
+			}
+		}
+		initArgs = append(initArgs, "init", g.options.ChainCfgPath)
 
-		cmd := exec.CommandContext(ctx, g.options.GethBin, args...)
+		cmd := exec.CommandContext(ctx, g.options.GethBin, initArgs...)
 		cmd.Stdout = g.stdout
 		cmd.Stderr = g.stderr
 
@@ -93,6 +118,7 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 
 	args = make([]string, 0)
 	args = append(args, "--datadir", g.options.DataDirPath)
+	args = append(args, "--state.scheme", stateScheme)
 	args = append(args, "--http")
 
 	g.rpcPort = g.ports.AcquirePort("geth", portmanager.ELPortPurpose)
@@ -124,6 +150,7 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 
 	minerNewPayloadTimeout := time.Second * 2
 	args = append(args, "--miner.newpayload-timeout", minerNewPayloadTimeout.String())
+	args = append(args, cfg.Args...)
 
 	jwtSecretStr, err := os.ReadFile(g.options.JWTSecretPath)
 	if err != nil {
