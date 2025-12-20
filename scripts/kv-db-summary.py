@@ -66,6 +66,34 @@ def _fmt_percent(value):
         return "n/a"
     return f"{value:+.2f}%"
 
+def _diff_percent(left, right):
+    if left is None or right is None or left == 0:
+        return None
+    return (right - left) / left * 100.0
+
+
+def _headline_line(label, left, right):
+    diff = _diff_percent(left, right)
+    return f"{label:40} {_fmt(left):>14} {_fmt(right):>14} {_fmt_percent(diff):>10}"
+
+
+def _top_diffs(keys, left, right, convert=None, top_n=5):
+    left_avg = _avg_metrics(left, keys)
+    right_avg = _avg_metrics(right, keys)
+    diffs = []
+    for key in keys:
+        lval = left_avg.get(key)
+        rval = right_avg.get(key)
+        if convert:
+            lval = convert(lval) if lval is not None else None
+            rval = convert(rval) if rval is not None else None
+        diff = _diff_percent(lval, rval)
+        if diff is None:
+            continue
+        diffs.append((abs(diff), diff, key, lval, rval))
+    diffs.sort(key=lambda item: item[0], reverse=True)
+    return diffs[:top_n]
+
 
 def _build_summary(output_dir, label):
     metadata_path = os.path.join(output_dir, "metadata.json")
@@ -102,9 +130,7 @@ def _compare_table(title, keys, left, right, unit=None, convert=None):
         if convert:
             lval = convert(lval) if lval is not None else None
             rval = convert(rval) if rval is not None else None
-        diff = None
-        if lval is not None and rval is not None and lval != 0:
-            diff = (rval - lval) / lval * 100.0
+        diff = _diff_percent(lval, rval)
         label = key
         if unit:
             label = f"{key} ({unit})"
@@ -126,6 +152,16 @@ def main():
     print(f"treedb run: {treedb['run_id']} ({treedb['run_dir']})")
     print()
 
+    headline_seq_keys = [
+        ("sequencer gas/per_second", "gas/per_second", None),
+        ("sequencer tx/per_block", "transactions/per_block", None),
+        ("sequencer latency/update_fork_choice", "latency/update_fork_choice", "ms"),
+    ]
+    headline_val_keys = [
+        ("validator gas/per_second", "gas/per_second", None),
+        ("validator latency/update_fork_choice", "latency/update_fork_choice", "ms"),
+    ]
+
     latency_keys_seq = [
         "latency/send_txs",
         "latency/get_payload",
@@ -146,6 +182,32 @@ def main():
         "chain/inserts.50-percentile",
         "chain/execution.50-percentile",
     ]
+
+    print("Headline summary (avg across blocks)")
+    header = f"{'metric':40} {'leveldb':>14} {'treedb':>14} {'diff':>10}"
+    print(header)
+    print("-" * len(header))
+    seq_avg = _avg_metrics(leveldb["sequencer"], [k for _, k, _ in headline_seq_keys])
+    seq_avg_treedb = _avg_metrics(treedb["sequencer"], [k for _, k, _ in headline_seq_keys])
+    for label, key, unit in headline_seq_keys:
+        lval = seq_avg.get(key)
+        rval = seq_avg_treedb.get(key)
+        if unit == "ms":
+            lval = lval / 1_000_000.0 if lval is not None else None
+            rval = rval / 1_000_000.0 if rval is not None else None
+        label_out = f"{label} ({unit})" if unit else label
+        print(_headline_line(label_out, lval, rval))
+    val_avg = _avg_metrics(leveldb["validator"], [k for _, k, _ in headline_val_keys])
+    val_avg_treedb = _avg_metrics(treedb["validator"], [k for _, k, _ in headline_val_keys])
+    for label, key, unit in headline_val_keys:
+        lval = val_avg.get(key)
+        rval = val_avg_treedb.get(key)
+        if unit == "ms":
+            lval = lval / 1_000_000.0 if lval is not None else None
+            rval = rval / 1_000_000.0 if rval is not None else None
+        label_out = f"{label} ({unit})" if unit else label
+        print(_headline_line(label_out, lval, rval))
+    print()
 
     print(_compare_table(
         "Sequencer performance (avg across blocks)",
@@ -212,10 +274,22 @@ def main():
         leveldb["validator"],
         treedb["validator"],
     ))
+    print()
+
+    print("Largest DB-ish deltas (abs %, avg across blocks)")
+    header = f"{'metric':40} {'leveldb':>14} {'treedb':>14} {'diff':>10}"
+    print(header)
+    print("-" * len(header))
+    for _, diff, key, lval, rval in _top_diffs(db_keys_seq, leveldb["sequencer"], treedb["sequencer"]):
+        print(f"{'sequencer ' + key:40} {_fmt(lval):>14} {_fmt(rval):>14} {_fmt_percent(diff):>10}")
+    for _, diff, key, lval, rval in _top_diffs(db_keys_val, leveldb["validator"], treedb["validator"]):
+        print(f"{'validator ' + key:40} {_fmt(lval):>14} {_fmt(rval):>14} {_fmt_percent(diff):>10}")
 
     print()
     print("Notes:")
     print("- Diff is treedb vs leveldb (%). Positive means treedb is higher.")
+    print("- The 50-percentile metrics are medians within geth's internal histograms; we then average those per-block medians.")
+    print("- Throughput is already summarized via gas/per_second and transactions/per_block in the headline and tables.")
     print("- DB-ish metrics use raw units from geth metrics; treat them as relative indicators.")
 
 
