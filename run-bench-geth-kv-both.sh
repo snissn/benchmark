@@ -15,6 +15,7 @@ BENCH_ROOT_DIR_BASE="${BENCH_ROOT_DIR_BASE:-$ROOT_DIR/data-dir}"
 BENCH_OUTPUT_DIR_BASE="${BENCH_OUTPUT_DIR_BASE:-$ROOT_DIR/output}"
 
 for engine in leveldb treedb; do
+  export OP_GETH_DB_TRACE_PATH=/tmp/${engine}-trace-${PAYLOAD_ID}-$(date +%s).jsonl.gz
   echo "=== Running KV stress with ${engine} ==="
   rm -rf "${BENCH_ROOT_DIR_BASE}-${engine}" "${BENCH_OUTPUT_DIR_BASE}-${engine}"
   mkdir -p "${BENCH_ROOT_DIR_BASE}-${engine}" "${BENCH_OUTPUT_DIR_BASE}-${engine}"

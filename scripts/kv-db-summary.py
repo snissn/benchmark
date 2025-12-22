@@ -189,6 +189,16 @@ def main():
         "engine/forkchoice/set_finalized.50-percentile",
         "engine/forkchoice/set_safe.50-percentile",
         "engine/forkchoice/build_payload.50-percentile",
+        "engine/forkchoice/set_finalized/write.50-percentile",
+        "engine/forkchoice/set_safe/update.50-percentile",
+        "engine/forkchoice/commit/state.50-percentile",
+        "engine/forkchoice/commit/snapshot.50-percentile",
+        "engine/forkchoice/commit/triedb.50-percentile",
+    ]
+    newpayload_commit_keys = [
+        "engine/newpayload/commit/state.50-percentile",
+        "engine/newpayload/commit/snapshot.50-percentile",
+        "engine/newpayload/commit/triedb.50-percentile",
     ]
 
     print("Headline summary (avg across blocks)")
@@ -249,6 +259,15 @@ def main():
         convert=lambda v: v / 1_000_000.0,
     ))
     print()
+    print(_compare_table(
+        "Sequencer NewPayload commit breakdown (avg, ms; lower is better)",
+        newpayload_commit_keys,
+        leveldb["sequencer"],
+        treedb["sequencer"],
+        unit="ms",
+        convert=lambda v: v / 1_000_000.0,
+    ))
+    print()
 
     latency_keys_val = [
         "latency/new_payload",
@@ -295,6 +314,15 @@ def main():
     print(_compare_table(
         "Validator forkchoice breakdown (avg, ms; lower is better)",
         forkchoice_keys,
+        leveldb["validator"],
+        treedb["validator"],
+        unit="ms",
+        convert=lambda v: v / 1_000_000.0,
+    ))
+    print()
+    print(_compare_table(
+        "Validator NewPayload commit breakdown (avg, ms; lower is better)",
+        newpayload_commit_keys,
         leveldb["validator"],
         treedb["validator"],
         unit="ms",

@@ -80,6 +80,12 @@ func NewParamsFromValues(assignments map[string]interface{}) (*types.RunParams, 
 			} else {
 				return nil, fmt.Errorf("invalid num blocks %s", v)
 			}
+		case "block_time_ms":
+			if vInt, ok := v.(int); ok {
+				params.BlockTime = time.Duration(vInt) * time.Millisecond
+			} else {
+				return nil, fmt.Errorf("invalid block_time_ms %s", v)
+			}
 		case "node_args":
 			// either a list of strings or a string (separated by spaces)
 			if vStr, ok := v.(string); ok {

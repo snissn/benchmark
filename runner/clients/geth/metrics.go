@@ -49,6 +49,14 @@ func (g *metricsCollector) GetMetricTypes() map[string]bool {
 		"engine/forkchoice/set_finalized.50-percentile": true,
 		"engine/forkchoice/set_safe.50-percentile":      true,
 		"engine/forkchoice/build_payload.50-percentile": true,
+		"engine/forkchoice/set_finalized/write.50-percentile": true,
+		"engine/forkchoice/set_safe/update.50-percentile":     true,
+		"engine/forkchoice/commit/state.50-percentile":    true,
+		"engine/forkchoice/commit/snapshot.50-percentile": true,
+		"engine/forkchoice/commit/triedb.50-percentile":   true,
+		"engine/newpayload/commit/state.50-percentile":    true,
+		"engine/newpayload/commit/snapshot.50-percentile": true,
+		"engine/newpayload/commit/triedb.50-percentile":   true,
 	}
 }
 

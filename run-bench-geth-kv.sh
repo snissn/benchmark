@@ -9,6 +9,7 @@ BENCH_ROOT_DIR="${BENCH_ROOT_DIR:-$ROOT_DIR/data-dir}"
 BENCH_OUTPUT_DIR="${BENCH_OUTPUT_DIR:-$ROOT_DIR/output}"
 CALLS_PER_BLOCK="${CALLS_PER_BLOCK:-5}"
 NUM_BLOCKS="${NUM_BLOCKS:-5}"
+BLOCK_TIME_MS="${BLOCK_TIME_MS:-1000}"
 GAS_PER_TX="${GAS_PER_TX:-2000000}"
 GAS_LIMIT="${GAS_LIMIT:-30000000}"
 DB_ENGINE="${DB_ENGINE:-leveldb}"
@@ -79,6 +80,8 @@ benchmarks:
         value: "${NODE_ARGS}"
       - type: num_blocks
         value: ${NUM_BLOCKS}
+      - type: block_time_ms
+        value: ${BLOCK_TIME_MS}
       - type: gas_limit
         values:
           - ${GAS_LIMIT}
