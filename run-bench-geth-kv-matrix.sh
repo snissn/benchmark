@@ -30,7 +30,7 @@ for scheme in hash path; do
 done
 
 if [[ "$RANDOMIZE" == "1" ]]; then
-  mapfile -t configs < <(printf '%s\n' "${configs[@]}" | python - <<'PY'
+  shuffled="$(printf '%s\n' "${configs[@]}" | python - <<'PY'
 import sys
 import random
 
@@ -38,7 +38,12 @@ items = [line.strip() for line in sys.stdin if line.strip()]
 random.shuffle(items)
 print("\n".join(items))
 PY
-  )
+  )"
+  configs=()
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    configs+=("$line")
+  done <<<"$shuffled"
 fi
 
 for rep in $(seq 1 "$REPS"); do
