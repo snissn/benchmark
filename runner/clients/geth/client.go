@@ -40,6 +40,7 @@ type GethClient struct {
 	metricsPort uint64
 	rpcPort     uint64
 	authRPCPort uint64
+	pprofPort   uint64
 
 	stdout io.WriteCloser
 	stderr io.WriteCloser
@@ -166,6 +167,14 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 	args = append(args, "--metrics.addr", "localhost")
 	args = append(args, "--metrics.port", fmt.Sprintf("%d", g.metricsPort))
 
+	if os.Getenv("BASE_BENCH_GETH_PPROF") != "" {
+		g.pprofPort = g.ports.AcquirePort("geth", portmanager.ELPprofPortPurpose)
+		args = append(args, "--pprof")
+		args = append(args, "--pprof.addr", "127.0.0.1")
+		args = append(args, "--pprof.port", fmt.Sprintf("%d", g.pprofPort))
+		g.logger.Info("Enabled geth pprof", "port", g.pprofPort)
+	}
+
 	// Set mempool size to 100x default
 	args = append(args, "--txpool.globalslots", "10000000")
 	args = append(args, "--txpool.globalqueue", "10000000")
@@ -262,6 +271,10 @@ func (g *GethClient) Stop() {
 	g.ports.ReleasePort(g.rpcPort)
 	g.ports.ReleasePort(g.authRPCPort)
 	g.ports.ReleasePort(g.metricsPort)
+	if g.pprofPort != 0 {
+		g.ports.ReleasePort(g.pprofPort)
+		g.pprofPort = 0
+	}
 
 	g.stdout = nil
 	g.stderr = nil

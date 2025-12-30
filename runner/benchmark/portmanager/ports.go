@@ -13,6 +13,7 @@ const (
 	AuthELPortPurpose
 	ELMetricsPortPurpose
 	BuilderMetricsPortPurpose
+	ELPprofPortPurpose
 )
 
 type PortManager interface {
