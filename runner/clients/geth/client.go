@@ -56,6 +56,32 @@ func NewGethClient(logger log.Logger, options *config.InternalClientOptions, por
 	}
 }
 
+func extractStateScheme(args []string) (scheme string, remaining []string, ok bool, err error) {
+	remaining = make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if strings.HasPrefix(arg, "--state.scheme=") {
+			scheme = strings.TrimPrefix(arg, "--state.scheme=")
+			ok = true
+			continue
+		}
+		if arg == "--state.scheme" {
+			if i+1 >= len(args) {
+				return "", args, false, errors.New("missing value for --state.scheme")
+			}
+			scheme = args[i+1]
+			ok = true
+			i++
+			continue
+		}
+		remaining = append(remaining, arg)
+	}
+	if ok && scheme != "hash" && scheme != "path" {
+		return "", args, false, errors.Errorf("invalid state scheme %q (must be hash or path)", scheme)
+	}
+	return scheme, remaining, ok, nil
+}
+
 func (g *GethClient) MetricsCollector() metrics.Collector {
 	return g.metricsCollector
 }
@@ -75,17 +101,25 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 	g.stderr = cfg.Stderr
 	args := make([]string, 0)
 
+	cfgArgs := cfg.Args
+	stateScheme, cfgArgs, schemeOverride, err := extractStateScheme(cfgArgs)
+	if err != nil {
+		return err
+	}
+
 	// first init geth
 	useTreeDB := false
-	for _, arg := range cfg.Args {
+	for _, arg := range cfgArgs {
 		if strings.HasPrefix(arg, "--db.engine=treedb") {
 			useTreeDB = true
 			break
 		}
 	}
-	stateScheme := "hash"
-	if useTreeDB {
-		stateScheme = "path"
+	if !schemeOverride {
+		stateScheme = "hash"
+		if useTreeDB {
+			stateScheme = "path"
+		}
 	}
 
 	if !g.options.SkipInit {
@@ -96,10 +130,10 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 			}
 		}
 
-		initArgs := make([]string, 0, len(cfg.Args)+6)
+		initArgs := make([]string, 0, len(cfgArgs)+6)
 		initArgs = append(initArgs, "--datadir", g.options.DataDirPath)
 		initArgs = append(initArgs, "--state.scheme", stateScheme)
-		for _, arg := range cfg.Args {
+		for _, arg := range cfgArgs {
 			if strings.HasPrefix(arg, "--db.engine") {
 				initArgs = append(initArgs, arg)
 			}
@@ -150,7 +184,7 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 
 	minerNewPayloadTimeout := time.Second * 2
 	args = append(args, "--miner.newpayload-timeout", minerNewPayloadTimeout.String())
-	args = append(args, cfg.Args...)
+	args = append(args, cfgArgs...)
 
 	jwtSecretStr, err := os.ReadFile(g.options.JWTSecretPath)
 	if err != nil {
