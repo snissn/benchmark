@@ -30,15 +30,7 @@ for scheme in hash path; do
 done
 
 if [[ "$RANDOMIZE" == "1" ]]; then
-  shuffled="$(printf '%s\n' "${configs[@]}" | python - <<'PY'
-import sys
-import random
-
-items = [line.strip() for line in sys.stdin if line.strip()]
-random.shuffle(items)
-print("\n".join(items))
-PY
-  )"
+  shuffled="$(printf '%s\n' "${configs[@]}" | python -c 'import sys,random; items=[line.strip() for line in sys.stdin if line.strip()]; random.shuffle(items); sys.stdout.write("\n".join(items))')"
   configs=()
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
