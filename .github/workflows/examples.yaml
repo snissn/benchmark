@@ -8,7 +8,7 @@ jobs:
   example-benchmarks:
     runs-on: ubuntu-latest
     env:
-      RETH_VERSION: 9d56da53ec0ad60e229456a0c70b338501d923a5
+      RETH_VERSION: 0c69e294c32728250280169b85727d3e7baa6402
       GETH_VERSION: 4bc345b22fbee14d3162becd197373a9565b7c6d
 
     steps:
