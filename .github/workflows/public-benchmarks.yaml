@@ -66,7 +66,10 @@ jobs:
           git -C op-geth checkout --force ${{ env.OP_GETH_VERSION }}
 
           pushd op-geth
-          make geth
+          # op-geth's build pipeline uses GITHUB_SHA for version metadata when present.
+          # In this workflow GITHUB_SHA refers to the benchmark repo commit, which is not in
+          # the op-geth git history, so ensure it points at the op-geth checkout.
+          GITHUB_SHA=$(git rev-parse HEAD) make geth
           cp ./build/bin/geth ${{ runner.temp }}/bin/geth
           chmod +x ${{ runner.temp }}/bin/geth
           popd
