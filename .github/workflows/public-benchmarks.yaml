@@ -72,8 +72,10 @@ jobs:
           echo "binaries compiled:"
           ls -la ${{ runner.temp }}/bin
 
-      - name: Run Basic Benchmarks
+      - name: Run Basic Benchmarks (reth + op-geth leveldb)
         id: unit
+        env:
+          GETH_DB_ENGINE: leveldb
         run: |
           mkdir ${{ runner.temp }}/data-dir
           mkdir ${{ runner.temp }}/output
