@@ -127,6 +127,28 @@ jobs:
             --reth-bin ${{ runner.temp }}/bin/reth \
             --geth-bin ${{ runner.temp }}/bin/geth
 
+      - name: Unify benchmark run group (combine all backends)
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          metadata_path = Path("${{ runner.temp }}") / "output" / "metadata.json"
+          data = json.loads(metadata_path.read_text())
+          runs = data.get("runs", [])
+          if not runs:
+              raise SystemExit(f"{metadata_path} contained no runs")
+
+          benchmark_run = "public-storage"
+          for run in runs:
+              test_cfg = run.get("testConfig") or {}
+              test_cfg["BenchmarkRun"] = benchmark_run
+              run["testConfig"] = test_cfg
+
+          metadata_path.write_text(json.dumps(data, indent=2) + "\n")
+          print(f"Unified BenchmarkRun={benchmark_run} across {len(runs)} runs")
+          PY
+
       - name: Build Report
         run: |
           cp -r ${{ runner.temp }}/output/ ./output/
