@@ -8,7 +8,7 @@ jobs:
   basic-benchmarks:
     runs-on: ubuntu-latest
     env:
-      RETH_VERSION: 9d56da53ec0ad60e229456a0c70b338501d923a5
+      RETH_VERSION: 0c69e294c32728250280169b85727d3e7baa6402
       OP_GETH_REPO: https://github.com/snissn/op-geth
       OP_GETH_VERSION: 0d08db45cd607cd97c2aca64a5ea8cfbdb44e1d6
 

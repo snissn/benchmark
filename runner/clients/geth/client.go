@@ -73,7 +73,6 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 
 	g.stdout = cfg.Stdout
 	g.stderr = cfg.Stderr
-	args := make([]string, 0)
 
 	// first init geth
 	useTreeDB := false
@@ -116,7 +115,7 @@ func (g *GethClient) Run(ctx context.Context, cfg *types.RuntimeConfig) error {
 		}
 	}
 
-	args = make([]string, 0)
+	args := make([]string, 0, len(cfg.Args)+64)
 	args = append(args, "--datadir", g.options.DataDirPath)
 	args = append(args, "--state.scheme", stateScheme)
 	args = append(args, "--http")
