@@ -1,8 +1,8 @@
-name: Public Benchmark Suite (op-geth + TreeDB)
+name: Public Benchmark Suite (op-geth + TreeDB, storage-focused)
 description: |
-  Runs the standard public benchmark workloads on op-geth with TreeDB enabled.
+  Runs a storage-focused subset of the public benchmark workloads on op-geth with TreeDB enabled.
 
-  This is intended to be used alongside `public-benchmark.yml` (geth default DB + reth)
+  This is intended to be used alongside `public-benchmark.yml` (reth + op-geth leveldb)
   to enable apples-to-apples comparisons on normalized hardware.
 
 payloads:
@@ -37,86 +37,11 @@ payloads:
     id: storage-update-full-block
     type: simulator
     storage_updated: 100
-  - name: ecrecover (full block)
-    id: ecrecover-full-block
+  - name: storage churn (create+delete full block)
+    id: storage-churn-full-block
     type: simulator
-    precompiles:
-      ecrecover: 100
-  - name: sha256hash (full block)
-    id: sha256hash-full-block
-    type: simulator
-    precompiles:
-      sha256hash: 100
-  - name: ripemd160hash (full block)
-    id: ripemd160hash-full-block
-    type: simulator
-    precompiles:
-      ripemd160hash: 100
-  - name: bigModExp (full block)
-    id: bigModExp-full-block
-    type: simulator
-    precompiles:
-      bigModExp: 100
-  - name: bn256Add (full block)
-    id: bn256Add-full-block
-    type: simulator
-    precompiles:
-      bn256Add: 100
-  - name: bn256ScalarMul (full block)
-    id: bn256ScalarMul-full-block
-    type: simulator
-    precompiles:
-      bn256ScalarMul: 100
-  - name: bn256Pairing (full block)
-    id: bn256Pairing-full-block
-    type: simulator
-    precompiles:
-      bn256Pairing: 100
-  - name: blake2F (full block)
-    id: blake2F-full-block
-    type: simulator
-    precompiles:
-      blake2F: 100
-  - name: bls12381G1Add (full block)
-    id: bls12381G1Add-full-block
-    type: simulator
-    precompiles:
-      bls12381G1Add: 100
-  - name: bls12381G1MultiExp (full block)
-    id: bls12381G1MultiExp-full-block
-    type: simulator
-    precompiles:
-      bls12381G1MultiExp: 100
-  - name: bls12381G2Add (full block)
-    id: bls12381G2Add-full-block
-    type: simulator
-    precompiles:
-      bls12381G2Add: 100
-  - name: bls12381G2MultiExp (full block)
-    id: bls12381G2MultiExp-full-block
-    type: simulator
-    precompiles:
-      bls12381G2MultiExp: 100
-  - name: bls12381Pairing (full block)
-    id: bls12381Pairing-full-block
-    type: simulator
-    precompiles:
-      bls12381Pairing: 100
-  - name: bls12381MapG1 (full block)
-    id: bls12381MapG1-full-block
-    type: simulator
-    precompiles:
-      bls12381MapG1: 100
-  - name: bls12381MapG2 (full block)
-    id: bls12381MapG2-full-block
-    type: simulator
-    precompiles:
-      bls12381MapG2: 100
-  - name: p256Verify (full block)
-    id: p256Verify-full-block
-    type: simulator
-    precompiles:
-      p256Verify: 100
+    storage_created: 100
+    storage_deleted: 100
 
 benchmarks:
   - metrics:
@@ -132,29 +57,14 @@ benchmarks:
           - base-mainnet-simulation
           - storage-create-full-block
           - storage-update-full-block
-          - ecrecover-full-block
-          - sha256hash-full-block
-          - ripemd160hash-full-block
-          - bigModExp-full-block
-          - bn256Add-full-block
-          - bn256ScalarMul-full-block
-          - bn256Pairing-full-block
-          - blake2F-full-block
-          - bls12381G1Add-full-block
-          - bls12381G1MultiExp-full-block
-          - bls12381G2Add-full-block
-          - bls12381G2MultiExp-full-block
-          - bls12381Pairing-full-block
-          - bls12381MapG1-full-block
-          - bls12381MapG2-full-block
-          - p256Verify-full-block
+          - storage-churn-full-block
       - type: node_type
         values:
           - geth
       - type: node_args
         value: "--db.engine=treedb"
       - type: num_blocks
-        value: 20
+        value: 10
       - type: gas_limit
         values:
           - 25000000
