@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RETH_VERSION: 9d56da53ec0ad60e229456a0c70b338501d923a5
-      GETH_VERSION: 4bc345b22fbee14d3162becd197373a9565b7c6d
+      OP_GETH_REPO: https://github.com/snissn/op-geth
+      OP_GETH_VERSION: 0d08db45cd607cd97c2aca64a5ea8cfbdb44e1d6
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -36,7 +37,7 @@ jobs:
         id: cache-bin
         with:
           path: ${{ runner.temp }}/bin
-          key: ${{ runner.os }}-binaries-reth-${{ env.RETH_VERSION }}-geth-${{ env.GETH_VERSION }}
+          key: ${{ runner.os }}-binaries-reth-${{ env.RETH_VERSION }}-op-geth-${{ env.OP_GETH_VERSION }}
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@82dee4ba654bd2146511f85f0d013af94670c4de # v1.4.0
@@ -45,7 +46,7 @@ jobs:
         run: |
           forge build --force
 
-      - name: Download geth and reth
+      - name: Download op-geth and reth
         if: steps.cache-bin.outputs.cache-hit != 'true'
         run: |
           mkdir -p ${{ runner.temp }}/bin
@@ -59,8 +60,8 @@ jobs:
           popd
           chmod +x ${{ runner.temp }}/bin/reth
 
-          git clone https://github.com/ethereum-optimism/op-geth
-          git -C op-geth checkout --force ${{ env.GETH_VERSION }}
+          git clone ${{ env.OP_GETH_REPO }} op-geth
+          git -C op-geth checkout --force ${{ env.OP_GETH_VERSION }}
 
           pushd op-geth
           make geth
@@ -80,6 +81,18 @@ jobs:
             --log.level info \
             run \
             --config ./configs/public/public-benchmark.yml \
+            --root-dir ${{ runner.temp }}/data-dir \
+            --output-dir ${{ runner.temp }}/output \
+            --reth-bin ${{ runner.temp }}/bin/reth \
+            --geth-bin ${{ runner.temp }}/bin/geth
+
+      - name: Run op-geth TreeDB Benchmarks
+        run: |
+          OP_GETH_TREEDB_PROFILE=safe \
+          go run benchmark/cmd/main.go \
+            --log.level info \
+            run \
+            --config ./configs/public/public-benchmark-geth-treedb.yml \
             --root-dir ${{ runner.temp }}/data-dir \
             --output-dir ${{ runner.temp }}/output \
             --reth-bin ${{ runner.temp }}/bin/reth \
