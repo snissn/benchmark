@@ -11,6 +11,9 @@ jobs:
       RETH_VERSION: 0c69e294c32728250280169b85727d3e7baa6402
       OP_GETH_REPO: https://github.com/snissn/op-geth
       OP_GETH_VERSION: 0d08db45cd607cd97c2aca64a5ea8cfbdb44e1d6
+      # op-geth's TreeDB backend expects newer gomap APIs (e.g., DeleteRange, MemtableMode).
+      # Pin an explicit gomap commit for reproducible CI builds.
+      GOMAP_VERSION: b69ad617e4ead1220c86924cb0dacbdfe517b167
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -39,7 +42,7 @@ jobs:
         id: cache-bin
         with:
           path: ${{ runner.temp }}/bin
-          key: ${{ runner.os }}-binaries-reth-${{ env.RETH_VERSION }}-op-geth-${{ env.OP_GETH_VERSION }}
+          key: ${{ runner.os }}-binaries-reth-${{ env.RETH_VERSION }}-op-geth-${{ env.OP_GETH_VERSION }}-gomap-${{ env.GOMAP_VERSION }}
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@82dee4ba654bd2146511f85f0d013af94670c4de # v1.4.0
@@ -66,9 +69,11 @@ jobs:
           git -C op-geth checkout --force ${{ env.OP_GETH_VERSION }}
 
           pushd op-geth
-          # Ensure no local developer replaces leak into CI builds.
-          # (Some snapshots may include `replace github.com/snissn/gomap => /abs/path`).
+          # Ensure no local developer replaces leak into CI builds, and ensure the gomap
+          # dependency matches the op-geth TreeDB integration expectations.
           go mod edit -dropreplace github.com/snissn/gomap 2>/dev/null || true
+          go get github.com/snissn/gomap@${{ env.GOMAP_VERSION }}
+          go mod tidy
           # op-geth's build pipeline uses GITHUB_SHA for version metadata when present.
           # In this workflow GITHUB_SHA refers to the benchmark repo commit, which is not in
           # the op-geth git history, so ensure it points at the op-geth checkout.
