@@ -66,6 +66,9 @@ jobs:
           git -C op-geth checkout --force ${{ env.OP_GETH_VERSION }}
 
           pushd op-geth
+          # Ensure no local developer replaces leak into CI builds.
+          # (Some snapshots may include `replace github.com/snissn/gomap => /abs/path`).
+          go mod edit -dropreplace github.com/snissn/gomap 2>/dev/null || true
           # op-geth's build pipeline uses GITHUB_SHA for version metadata when present.
           # In this workflow GITHUB_SHA refers to the benchmark repo commit, which is not in
           # the op-geth git history, so ensure it points at the op-geth checkout.
