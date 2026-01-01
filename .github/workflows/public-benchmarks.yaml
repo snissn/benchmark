@@ -72,6 +72,18 @@ jobs:
           # Ensure no local developer replaces leak into CI builds, and ensure the gomap
           # dependency matches the op-geth TreeDB integration expectations.
           go mod edit -dropreplace github.com/snissn/gomap 2>/dev/null || true
+          # TreeDB options used by op-geth are intentionally unsafe for throughput and must be
+          # explicitly acknowledged in gomap. Patch in AllowUnsafe for this pinned op-geth
+          # snapshot so the binary can start in CI.
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("ethdb/treedb/treedb.go")
+          s = path.read_text()
+          if "AllowUnsafe:" not in s:
+              s = s.replace("MemtableMode: memtableMode,\n", "MemtableMode: memtableMode,\n\n\t\tAllowUnsafe: true,\n")
+              path.write_text(s)
+          PY
+          gofmt -w ethdb/treedb/treedb.go
           go get github.com/snissn/gomap@${{ env.GOMAP_VERSION }}
           go mod tidy
           # op-geth's build pipeline uses GITHUB_SHA for version metadata when present.
