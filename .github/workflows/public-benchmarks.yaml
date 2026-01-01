@@ -14,6 +14,8 @@ jobs:
       # op-geth's TreeDB backend expects newer gomap APIs (e.g., DeleteRange, MemtableMode).
       # Pin an explicit gomap commit for reproducible CI builds.
       GOMAP_VERSION: b69ad617e4ead1220c86924cb0dacbdfe517b167
+      # Bump to invalidate the op-geth binary cache when we change local patching behavior.
+      OP_GETH_PATCH_VERSION: "1"
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -42,7 +44,7 @@ jobs:
         id: cache-bin
         with:
           path: ${{ runner.temp }}/bin
-          key: ${{ runner.os }}-binaries-reth-${{ env.RETH_VERSION }}-op-geth-${{ env.OP_GETH_VERSION }}-gomap-${{ env.GOMAP_VERSION }}
+          key: ${{ runner.os }}-binaries-reth-${{ env.RETH_VERSION }}-op-geth-${{ env.OP_GETH_VERSION }}-gomap-${{ env.GOMAP_VERSION }}-patch-${{ env.OP_GETH_PATCH_VERSION }}
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@82dee4ba654bd2146511f85f0d013af94670c4de # v1.4.0
