@@ -117,7 +117,7 @@ jobs:
 
       - name: Run op-geth TreeDB Benchmarks
         run: |
-          OP_GETH_TREEDB_PROFILE=safe \
+          OP_GETH_TREEDB_PROFILE=fast \
           go run benchmark/cmd/main.go \
             --log.level info \
             run \
